@@ -1,7 +1,7 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.5
-#update 2017.06.30
+#version 1.6.6
+#update 2017.07.04
 #By YPC
 remote_file="Tools/app-environment_autoinstall.sh"
 remote_file_md5="Tools/app-environment_autoinstall.md5"
