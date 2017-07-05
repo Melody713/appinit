@@ -413,7 +413,7 @@ cat /etc/passwd|grep devs>/dev/null
 if [ $? -eq 1 ]
   then
   /usr/sbin/useradd -p "aPApguhdYP2ks" devs
-  echo "devs账号已创建,密码jskjHZXYdevs"
+  echo "devs账号已创建"
 else
   echo "devs账号已存在"
 
@@ -422,7 +422,7 @@ cat /etc/passwd|grep ops>/dev/null
 if [ $? -eq 1 ]
 then
   /usr/sbin/useradd -p "6Jn8XyRkaMcQQ" ops
-  echo "ops账号已创建,密码jskjHZXYops"
+  echo "ops账号已创建"
 else
   echo "ops账号已存在"
 fi
