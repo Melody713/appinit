@@ -44,23 +44,15 @@ fi
 echo "-----------------------------------------------------------------------"
 
 function personnal () {
-#下载vim-plug
-rpm -qa|grep git ctags
-if [ $? -ne 0 ]
-then
-  yum install git ctags -y
-fi
-  mkdir ~/.vim/plugged
-  curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  curl -fLo ~/.vimrc https://raw.githubusercontent.com/Melody713/appinit/master/.vimrc
-  echo "user vim PlugInstall"
 
+#curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 #mkdir -p ~/.config/nvim/plugged
 #mkdir -p ~/.vim
 #ln -s ~/.config/nvim/autoload ~/.vim/autoload
 #ln -s ~/.config/nvim/plugged ~/.vim/plugged
 #ln -s `pwd`/init.vim ~/.config/nvim/init.vim
 #ln -s `pwd`/init.vim ~/.vimrc
+
 #修改ps1
 cat > /etc/profile.d/personnal.sh << EOF
 HISTSIZE=10000
@@ -76,6 +68,17 @@ alias egrep='egrep --color'
 alias fgrep='fgrep --color'
 
 EOF
+
+#下载vim-plug
+rpm -qa|grep git && rpm -qa |grep ctags
+if [ $? -ne 0 ]
+then
+  yum install git ctags -y
+fi
+  curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  mkdir -p ~/.vim/plugged
+  curl -fLo ~/.vimrc https://raw.githubusercontent.com/Melody713/appinit/master/.vimrc
+  echo "use vim PlugInstall"
 
 }
 
