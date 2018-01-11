@@ -1,12 +1,18 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.6
-#update 2017.07.04
+#version 1.6.8.5
+#update 2017.12.19
+#basic_env check update
 #By YPC
-remote_file="Tools/app-environment_autoinstall.sh"
-remote_file_md5="Tools/app-environment_autoinstall.md5"
-scp_name="app-environment_autoinstall"
-#local_file_md5="app-environment_autoinstall.md5"
+#Update note
+#Add iptables, default open 22 1722 10050 4506 4505
+#update 2017.12.25
+#delete update modles
+#add gameplaza salt-minion function
+#update 2018.01.08
+#Add iptables ACCEPT port : 21000~21099,8080~8090
+
+LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
 webdir=/data/SicentWebserver
 appdir=/data/SicentApp
@@ -35,34 +41,36 @@ else
   ftp_url='http://tools.js-ops.com:12124'
 fi
 
-echo "脚本自动更新已关闭"
-#check scp_version
-#echo "检查是否有新版本"
-#rm -rf $scp_name.md5
-#rm -rf $scp_name.local.md5
-#wget $ftp_url/$remote_file_md5 -q
-#md5sum $scp_name.sh>$scp_name.local.md5
-#diff -r $scp_name.md5 $scp_name.local.md5
-#if [ $? -ne 0 ]
-#  then
-#    echo "发现新版本,现在开始下载更新"
-#    rm -rf $scp_name.sh
-#    wget $ftp_url/$remote_file -q
-#    chmod +x $scp_name.sh
-#    if [ -x $scp_name.sh ]
-#      then
-#        echo "脚本更新检查完毕"
-#    else
-#       echo "脚本更新失败,请尝试从以下地址手动获取"
-#       echo "$remote_file"
-#    fi
-#       echo "请重新执行脚本,已确保使用到最新版本"
-#       exit 0
-#  else
-#   echo "脚本已是最新"
-#fi
-
 echo "-----------------------------------------------------------------------"
+
+function personnal () {
+#下载vim-plug
+curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+mkdir -p ~/.config/nvim/plugged
+mkdir -p ~/.vim
+ln -s ~/.config/nvim/autoload ~/.vim/autoload
+ln -s ~/.config/nvim/plugged ~/.vim/plugged
+ln -s `pwd`/init.vim ~/.config/nvim/init.vim
+ln -s `pwd`/init.vim ~/.vimrc
+#修改ps1
+cat > /etc/profile.d/personnal.sh << EOF
+HISTSIZE=10000
+PS1="\[\e[37;40m\][\[\e[32;40m\]\u\[\e[37;40m\]@\h \[\e[35;40m\]\W\[\e[0m\]]\\$ "
+HISTTIMEFORMAT="%F %T `whoami` "
+alias l='ls -AFhlt'
+alias lh='l | head'
+alias vi=vim
+
+GREP_OPTIONS="--color=auto"
+alias grep='grep --color'
+alias egrep='egrep --color'
+alias fgrep='fgrep --color'
+
+EOF
+
+
+}
+
 
 #Check basic_dir
 function basic_dir () {
@@ -78,12 +86,12 @@ function basic_dir () {
 
 #install basic_env
 function basic_env () {
-  rpm -qa|grep wget && rpm -qa|grep make && rpm -qa|grep gcc && rpm -qa|grep lftp > /dev/null
+  rpm -qa|grep wget && rpm -qa|grep make && rpm -qa|grep gcc && rpm -qa|grep lftp && rpm -qa|grep gcc-c++ && rpm -qa|grep ntpdate > /dev/null
   if [ $? -eq 1 ]
   then
-	yum -y install zlib-devel openssl-devel perl net-snmp lsof wget ntpdate make gcc gcc-c++ ncurses* telnet ftp openssh-clients vim lrzsz ntpdate
+	yum -y install zlib-devel openssl-devel perl net-snmp lsof wget ntpdate make gcc gcc-c++ ncurses* telnet ftp openssh-clients vim lrzsz
 	rpm -qa|grep epel > /dev/null
-	if [ $? -eq 1]
+	if [ $? -eq 1 ]
 	then
 		rpm -Uvh $ftp_url/Tools/Linux/epel-release-6-8.noarch.rpm
     yum --disablerepo=epel -y update ca-certificates
@@ -96,9 +104,23 @@ function selinux () {
 	setenforce 0
 	sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 	echo -e "\e[1;32m已关闭Selinux\e[0m"
-	/etc/init.d/iptables stop
-	chkconfig iptables off
-	echo -e "\e[1;32m已关闭Iptables\e[0m"
+
+  iptables -A INPUT -d $ip -p tcp --dport 22 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 1722 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 10050 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 4505 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 4506 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 80 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 443 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 21000:21099 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 8081:8090 -j ACCEPT
+ 
+  /sbin/service iptables save
+	/etc/init.d/iptables restart
+	chkconfig iptables on
+	echo -e "\e[1;32m已开启Iptables
+  开放22,1722,10050,4505,4506,21000~21099,8081~8089端口
+  \e[0m"
 }
 
 function ntp () {
@@ -109,7 +131,31 @@ function ntp () {
 }
 
 function mnt_disk(){
-	blkid /dev/sdb1 | awk -F'"' '{print "UUID="$2,"/data                   ext4    defaults        1 2"}' >> /etc/fstab
+DISK_COUNTS=`fdisk -l |grep "^Disk /dev/sd"|grep -v "/dev/sda"|wc -l`
+if [ $DISK_COUNTS -ne 0 ]
+then
+  echo "发现新磁盘,开始分区"
+fdisk  /dev/sdb << EOF
+n
+p
+1
+
+
+w
+q
+EOF
+sleep 5
+
+mkfs.ext4 /dev/sdb1
+
+blkid /dev/sdb1 | awk -F '"' '{print "UUID="$2,"/data                   ext4    defaults        1 2"}' >> /etc/fstab
+
+mount /dev/sdb1 /data/
+echo "新磁盘已挂载到 /data "
+else
+  echo "未发现新磁盘"
+  return
+fi
 }
 
 function jdk () {
@@ -192,11 +238,15 @@ function install_nginx () {
 		echo -e "\e[1;32mNginx未安装,开始安装Nginx\e[0m"
 		wget $ftp_url/Tools/Nginx/nginx-1.5.8.tar.gz -P $toolsdir/
 		wget $ftp_url/Tools/Nginx/pcre-8.36.tar.gz -P $toolsdir/
+    wget $ftp_url/Tools/Nginx/ngx_cache_purge-2.3.tar.gz -P $toolsdir
+
 		cd $toolsdir
 		tar -zxf nginx-1.5.8.tar.gz
 		tar -zxf pcre-8.36.tar.gz
+    tar -zxf ngx_cache_purge-2.3.tar.gz
+
 		cd $toolsdir/nginx-1.5.8
-		./configure --prefix=$webdir/nginx --with-pcre=$toolsdir/pcre-8.36 --with-http_stub_status_module
+		./configure --prefix=$webdir/nginx --with-pcre=$toolsdir/pcre-8.36 --with-http_stub_status_module --add-module=../ngx_cache_purge-2.3
 		make && make install
 		$webdir/nginx/sbin/nginx
 	fi
@@ -245,7 +295,7 @@ EOF
 )>>/etc/security/limits.conf
 		fi
 		groupadd mysql
-		useradd -r -g mysql -s /sbin/nologin mysql
+		/usr/sbin/useradd -r -g mysql -s /sbin/nologin mysql
 		mkdir -pv /data/SicentDB/{mysql,tmp_db,database}
 		chown -R mysql:mysql $dbdir/
 		wget $ftp_url/Tools/Mysql/mysql-5.5.27.tar.gz -P $toolsdir
@@ -329,7 +379,12 @@ function rabbitmq() {
 
 function salt_online() {
 		cd /root/
-		rpm -Uvh http://ftp.linux.ncsu.edu/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+	  rpm -qa|grep epel > /dev/null
+	  if [ $? -eq 1 ]
+    then
+  		rpm -Uvh http://ftp.linux.ncsu.edu/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+      yum --disablerepo=epel -y update ca-certificates
+    fi
 		yum update -y python 
 		yum install -y salt-minion
 		chkconfig salt-minion on
@@ -355,13 +410,38 @@ function salt_yfb() {
     echo "Slat客户端安装完成,请登录salt-master完成客户端认证"
 }
 
+function salt_gameplaza() {
+		cd /root/
+	  rpm -qa|grep epel > /dev/null
+	  if [ $? -eq 1 ]
+    then
+  		rpm -Uvh http://ftp.linux.ncsu.edu/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+      yum --disablerepo=epel -y update ca-certificates
+    fi
+		yum update -y python 
+		yum install -y salt-minion
+		chkconfig salt-minion on
+		echo "输入主机ID,例: 172.30.1.138_qdd_servicemix"
+		read id
+		echo "id: $id" >> /etc/salt/minion
+		echo "master: saltauth.wxdesk.com" >> /etc/salt/minion
+		service salt-minion start
+		echo "Slat客户端安装完成,请登录salt-master完成客户端认证"
+}
+
+
 function zabbix() {
 ZABBIX_PKG=zabbix-3.0.3.tar.gz
 ZABBIX_CONF=/etc/zabbix/zabbix_agentd.conf
 
 if [ ! -f /etc/init.d/zabbix_agentd ]
 then
-/usr/bin/lftp 172.30.134.249 -p 2122 -u 'sa,js!HZ!121' -e "cd Tools/linux && get zabbix-3.0.3.tar.gz ;exit"
+  rpm -qa|grep lftp
+  if [ $? -ne 0 ]
+  then
+    yum install lftp -y
+  fi
+/usr/bin/lftp 122.224.184.230 -p 2122 -u 'sa,js!HZ!121' -e "cd Tools/linux && get zabbix-3.0.3.tar.gz ;exit"
 if [ -f /root/$ZABBIX_PKG  ]
   then
   tar zxf /root/$ZABBIX_PKG -C /root/
@@ -396,20 +476,47 @@ if [ ! -d /etc/zabbix/alertscripts ]
 fi
 
   sed -i "s/LogFile=.*/LogFile=\/var\/log\/zabbix\/zabbix_agentd.log/g" $ZABBIX_CONF
-  #sed -i "s/Server=127.0.0.1/Server=172.30.134.106/g" $ZABBIX_CONF
   echo -e "\e[1;32m输入ZABBIX服务端IP,多个IP使用逗号分隔\e[0m" 
   read ZABBIX_SERVER_IP
   sed -i "s/Server=127.0.0.1/Server=$ZABBIX_SERVER_IP/g" $ZABBIX_CONF
   echo "Include=/etc/zabbix/scripts/*.conf" >> $ZABBIX_CONF
   /etc/init.d/zabbix_agentd restart 
+  echo "/etc/init.d/zabbix_agentd restart" >> /etc/rc.local
 else
   echo "Zabbix已安装,无需部署"
 fi
 
 }
 
+function zookeeper () {
+if [ ! -d /data/SicentApp/zookeeper-3.4.10 ]
+then
+  echo "下载zookeeper-3.4.10.tar.gz"
+  wget -q $ftp_url/Tools/zookeeper/zookeeper-3.4.10.tar.gz -P $toolsdir
+  tar zxf $toolsdir/zookeeper-3.4.10.tar.gz -C $appdir
+else
+  echo -e "\e[1;32mZookeeper已部署,请检查核实\e[0m"
+  exit
+fi
+if [ ! -d /data/SicentApp/zookeeper_data ]
+then
+  mkdir -p /data/SicentApp/zookeeper_data
+  mkdir -p /var/log/zookeeper
+  sed -i "s/dataDir=.*/dataDir=\/data\/SicentApp\/zookeeper_data/g" $appdir/zookeeper-3.4.10/conf/zoo_sample.cfg
+  echo "datLogDir=/var/log/zookeeper/datalog" >> $appdir/zookeeper-3.4.10/conf/zoo_sample.cfg
+fi
+echo -e "\e[1;32mZookeeper安装完毕
+配置文件$appdir/zookeeper-3.4.10/conf/zoo_sample.cfg
+zookeeper_data目录: $appdir/zookeeper_data\e[0m"
+
+}
+
+
+
+
 function useradd() {
 cat /etc/passwd|grep devs>/dev/null
+###us "openssl passwd -stdin" get PWD###
 if [ $? -eq 1 ]
   then
   /usr/sbin/useradd -p "aPApguhdYP2ks" devs
@@ -429,19 +536,34 @@ fi
 
 }
 
+function dev  () {
+cat /etc/passwd|grep devread > /dev/null
+if [ $? -eq 1 ]
+then
+  /usr/sbin/useradd -p "mXB17bvNY5WWw" devread
+  echo "devread账号已创建"
+else
+  echo "devread账号已存在"
+fi
+}
+
 
 echo -e "\e[1;32m选择要安装的服务类型,目前支持以下项目:\e[0m"
-echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,关闭iptables,配置时间同步
+echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,开启iptables,配置时间同步
 (2): 部署Tomcat-7.0.53,JDK-1.7.0_45
-(3): 部署Nginx-1.5.8,PCRE-8.36
+(3): 部署Nginx-1.5.8,PCRE-8.36,ngx_cache_purge-2.3,http_realip_module
 (4): 部署Mysql-5.5.27
 (5): 部署Redis-2.8.10
 (6): 部署Rabbitmq-3.4.2.1
 (7): 部署salt客户端(线上环境)
 (8): 部署salt客户端(测试环境)
 (9): 部署JDK环境(JDK-1.7.0_45)
+(0): 部署salt客户端(网吧管家项目组)
+(a): 部署zookeeper-3.4.10
+(b): 磁盘分区挂载(/dev/sdb)
 (z): 部署Zabbix 3.0.3客户端
 (u): 添加devs和ops账号
+(r): 添加devread账号
 (q): 退出\e[0m"
 
 echo -e "\e[1;32m请输入序号:\e[0m"
@@ -451,6 +573,7 @@ function main ()
 {
 	case "$options" in
 	1)
+    clear
 		basic_dir
 		basic_env
 		selinux
@@ -460,6 +583,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	2)
+    clear
 		basic_dir
 		basic_env
 		jdk
@@ -469,6 +593,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	3)
+    clear
 		basic_dir
 		basic_env
 		install_nginx
@@ -477,6 +602,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	4)
+    clear
 		basic_dir
 		basic_env
 		mysql
@@ -485,6 +611,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	5)
+    clear
 		basic_dir
 		basic_env
 		redis
@@ -493,6 +620,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	6)
+    clear
 		basic_dir
 		basic_env
 		rabbitmq
@@ -501,6 +629,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	7)
+    clear
 		basic_dir
 		basic_env
 		salt_online
@@ -509,6 +638,7 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	8)
+    clear
 		basic_dir
     basic_env
     salt_yfb
@@ -517,24 +647,57 @@ function main ()
 		sh app-environment_autoinstall.sh
 		;;
 	9)
+    clear
 		jdk
 		cd /root
 		sh app-environment_autoinstall.sh
 		;;
+  0)
+    clear
+    salt_gameplaza
+    cd /root
+    sh app-environment_autoinstall.sh
+    ;;
+  a)
+    clear
+    jdk
+    zookeeper
+    cd /root/
+    sh app-environment_autoinstall.sh
+    ;;
+  b)
+    clear
+    mnt_disk
+    cd /root
+    sh app-environment_autoinstall.sh
+    ;;
   z)
+    clear
     zabbix
 		cd /root
     sh app-environment_autoinstall.sh
     ;;
   u)
+    clear
     useradd
     cd /root
     sh app-environment_autoinstall.sh
     ;;
+  r)
+    clear
+    dev
+    cd /root
+    sh app-environment_autoinstall.sh
+    ;;
+  m)
+    personnal
+    ;;
 	q)
+    echo "退出脚本"
 		exit
 		;;
 	*)
+    clear
 		echo -e "\e[1;31m请输入正确的选项\e[0m"
 		sh app-environment_autoinstall.sh
 	esac
