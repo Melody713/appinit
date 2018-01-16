@@ -43,15 +43,7 @@ fi
 
 echo "-----------------------------------------------------------------------"
 
-function personnal () {
-
-#curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-#mkdir -p ~/.config/nvim/plugged
-#mkdir -p ~/.vim
-#ln -s ~/.config/nvim/autoload ~/.vim/autoload
-#ln -s ~/.config/nvim/plugged ~/.vim/plugged
-#ln -s `pwd`/init.vim ~/.config/nvim/init.vim
-#ln -s `pwd`/init.vim ~/.vimrc
+function usefull () {
 
 #修改ps1
 cat > /etc/profile.d/personnal.sh << EOF
@@ -79,6 +71,14 @@ fi
   mkdir -p ~/.vim/plugged
   curl -fLo ~/.vimrc https://raw.githubusercontent.com/Melody713/appinit/master/.vimrc
   echo "use vim PlugInstall"
+
+#tmux 配置
+rpm -qa|grep tmux >> /dev/null
+if [ $? -ne 0 ]
+then
+  yum install tmux -y
+fi
+curl -fLo ~/.tmux.conf https://raw.githubusercontent.com/Melody713/appinit/master/.tmux.conf
 
 }
 
@@ -115,16 +115,24 @@ function selinux () {
 	setenforce 0
 	sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
 	echo -e "\e[1;32m已关闭Selinux\e[0m"
+}
 
+function iptables () {
+  
+  iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+  iptables -A INPUT -i lo -j ACCEPT
+  iptables -A INPUT -s 127.0.0.1/32 -j ACCEPT
+  iptablse -A INPUT -s 172.30.0.0/16 -p tcp --dport 22 -j ACCEPT
+  iptablse -A INPUT -s 172.30.0.0/16 -p tcp --dport 4505:4506 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 22 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 1722 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 10050 -j ACCEPT
-  iptables -A INPUT -d $ip -p tcp --dport 4505 -j ACCEPT
-  iptables -A INPUT -d $ip -p tcp --dport 4506 -j ACCEPT
+  iptables -A INPUT -d $ip -p tcp --dport 4505:4506 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 80 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 443 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 21000:21099 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 8081:8090 -j ACCEPT
+  iptables -A INPUT -j REJECT --reject-with icpm-host-unreachable
  
   /sbin/service iptables save
 	/etc/init.d/iptables restart
@@ -132,11 +140,12 @@ function selinux () {
 	echo -e "\e[1;32m已开启Iptables
   开放22,1722,10050,4505,4506,21000~21099,8081~8089端口
   \e[0m"
+
 }
 
 function ntp () {
 	ntpdate t2.swomc.net
-	echo "10 0 * * * /usr/sbin/ntpdate t2.swomc.net" > /tmp/ntp.cron
+	echo "10 0 * * * /usr/sbin/ntpdate t2.swomc.net &> /var/log/ntpdate.log" > /tmp/ntp.cron
 	crontab /tmp/ntp.cron
 	echo -e "\e[1;32m时间已同步\e[0m"
 }
@@ -560,7 +569,7 @@ fi
 
 
 echo -e "\e[1;32m选择要安装的服务类型,目前支持以下项目:\e[0m"
-echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,开启iptables,配置时间同步
+echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,配置时间同步
 (2): 部署Tomcat-7.0.53,JDK-1.7.0_45
 (3): 部署Nginx-1.5.8,PCRE-8.36,ngx_cache_purge-2.3,http_realip_module
 (4): 部署Mysql-5.5.27
@@ -572,6 +581,7 @@ echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,开
 (0): 部署salt客户端(网吧管家项目组)
 (a): 部署zookeeper-3.4.10
 (b): 磁盘分区挂载(/dev/sdb)
+(c): 开启iptables
 (z): 部署Zabbix 3.0.3客户端
 (u): 添加devs和ops账号
 (r): 添加devread账号
@@ -590,7 +600,7 @@ function main ()
 		selinux
 		ntp
 		echo -e "\e[1;32m基础环境安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	2)
@@ -600,7 +610,7 @@ function main ()
 		jdk
 		install_tomcat
 		echo -e "\e[1;32mTOMCAT安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	3)
@@ -609,7 +619,7 @@ function main ()
 		basic_env
 		install_nginx
 		echo -e "\e[1;32mNginx安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	4)
@@ -618,7 +628,7 @@ function main ()
 		basic_env
 		mysql
 		echo -e "\e[1;32mMYSQL安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	5)
@@ -627,7 +637,7 @@ function main ()
 		basic_env
 		redis
 		echo -e "\e[1;32mREDIS安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	6)
@@ -636,7 +646,7 @@ function main ()
 		basic_env
 		rabbitmq
 		echo -e "\e[1;32mRabbitMQ安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	7)
@@ -645,7 +655,7 @@ function main ()
 		basic_env
 		salt_online
 		echo -e "\e[1;32msalt客户端安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	8)
@@ -654,54 +664,62 @@ function main ()
     basic_env
     salt_yfb
 		echo -e "\e[1;32msalt客户端安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	9)
     clear
 		jdk
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
   0)
     clear
     salt_gameplaza
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   a)
     clear
     jdk
     zookeeper
-    cd /root/
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   b)
     clear
     mnt_disk
-    cd /root
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  c)
+    clear
+    iptables
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   z)
     clear
     zabbix
-		cd /root
+		cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   u)
     clear
     useradd
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   r)
     clear
     dev
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   m)
-    personnal
+    usefull
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
     ;;
 	q)
     echo "退出脚本"
@@ -710,6 +728,7 @@ function main ()
 	*)
     clear
 		echo -e "\e[1;31m请输入正确的选项\e[0m"
+    cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 	esac
 }
