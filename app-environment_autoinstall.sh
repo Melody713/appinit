@@ -59,6 +59,13 @@ alias grep='grep --color'
 alias egrep='egrep --color'
 alias fgrep='fgrep --color'
 
+if [ -e /usr/share/terminfo/x/xterm+256color ];
+then
+  export TERM='xterm-256color'
+else
+  export TERM='xterm-color'
+fi
+
 EOF
 
 #下载vim-plug
@@ -122,6 +129,8 @@ function iptables () {
   iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
   iptables -A INPUT -i lo -j ACCEPT
   iptables -A INPUT -s 127.0.0.1/32 -j ACCEPT
+  iptables -A INPUT -s 10.0.0.0/8 -p icmp -j ACCEPT
+  iptables -A INPUT -s 127.0.0.0/8 -p icmp -j ACCEPT
   iptablse -A INPUT -s 172.30.0.0/16 -p tcp --dport 22 -j ACCEPT
   iptablse -A INPUT -s 172.30.0.0/16 -p tcp --dport 4505:4506 -j ACCEPT
   iptables -A INPUT -d $ip -p tcp --dport 22 -j ACCEPT
