@@ -135,7 +135,7 @@ function iptables () {
 -A INPUT -i lo -j ACCEPT
 -A INPUT -s 127.0.0.1/32 -j ACCEPT
 -A INPUT -s 10.0.0.0/8 -p icmp -j ACCEPT
--A INPUT -s 127.0.0.0/8 -p icmp -j ACCEPT
+-A INPUT -s 172.0.0.0/8 -p icmp -j ACCEPT
 -A INPUT -s 172.30.0.0/16 -p tcp --dport 22 -j ACCEPT
 -A INPUT -s 172.30.0.0/16 -p tcp --dport 4505:4506 -j ACCEPT
 -A INPUT -d $ip -p tcp --dport 22 -j ACCEPT
