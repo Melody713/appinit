@@ -11,6 +11,8 @@
 #add gameplaza salt-minion function
 #update 2018.01.08
 #Add iptables ACCEPT port : 21000~21099,8080~8090
+#update 2018.01.19
+#Add htop iftop && makecache
 
 LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
@@ -107,12 +109,13 @@ function basic_env () {
   rpm -qa|grep wget && rpm -qa|grep make && rpm -qa|grep gcc && rpm -qa|grep lftp && rpm -qa|grep gcc-c++ && rpm -qa|grep ntpdate > /dev/null
   if [ $? -eq 1 ]
   then
-	yum -y install zlib-devel openssl-devel perl net-snmp lsof wget ntpdate make gcc gcc-c++ ncurses* telnet ftp openssh-clients vim lrzsz
+	yum -y install zlib-devel openssl-devel perl net-snmp lsof wget ntpdate make gcc gcc-c++ ncurses* telnet ftp openssh-clients vim lrzsz htop iftop
 	rpm -qa|grep epel > /dev/null
 	if [ $? -eq 1 ]
 	then
 		rpm -Uvh $ftp_url/Tools/Linux/epel-release-6-8.noarch.rpm
     yum --disablerepo=epel -y update ca-certificates
+    yum makecache
 	fi
 	echo -e "\e[1;32m基础环境已更新\e[0m"
   fi
@@ -510,7 +513,7 @@ if [ ! -d /etc/zabbix/alertscripts ]
 fi
 
   sed -i "s/LogFile=.*/LogFile=\/var\/log\/zabbix\/zabbix_agentd.log/g" $ZABBIX_CONF
-  echo -e "\e[1;32m输入ZABBIX服务端IP,多个IP使用逗号分隔\e[0m" 
+  echo -e "\e[1;32m输入ZABBIX服务端IP,多个IP使用逗号分隔|无锡Proxy:172.30.236.82|杭州Zabbix:172.30.134.106,122.224.184.216\e[0m" 
   read ZABBIX_SERVER_IP
   sed -i "s/Server=127.0.0.1/Server=$ZABBIX_SERVER_IP/g" $ZABBIX_CONF
   echo "Include=/etc/zabbix/scripts/*.conf" >> $ZABBIX_CONF
@@ -544,7 +547,6 @@ echo -e "\e[1;32mZookeeper安装完毕
 zookeeper_data目录: $appdir/zookeeper_data\e[0m"
 
 }
-
 
 
 
@@ -614,7 +616,7 @@ function main ()
 		selinux
 		ntp
 		echo -e "\e[1;32m基础环境安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	2)
@@ -624,7 +626,7 @@ function main ()
 		jdk
 		install_tomcat
 		echo -e "\e[1;32mTOMCAT安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	3)
@@ -633,7 +635,7 @@ function main ()
 		basic_env
 		install_nginx
 		echo -e "\e[1;32mNginx安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	4)
@@ -642,7 +644,7 @@ function main ()
 		basic_env
 		mysql
 		echo -e "\e[1;32mMYSQL安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	5)
@@ -651,7 +653,7 @@ function main ()
 		basic_env
 		redis
 		echo -e "\e[1;32mREDIS安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	6)
@@ -660,7 +662,7 @@ function main ()
 		basic_env
 		rabbitmq
 		echo -e "\e[1;32mRabbitMQ安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	7)
@@ -669,7 +671,7 @@ function main ()
 		basic_env
 		salt_online
 		echo -e "\e[1;32msalt客户端安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	8)
@@ -678,61 +680,61 @@ function main ()
     basic_env
     salt_yfb
 		echo -e "\e[1;32msalt客户端安装完毕\e[0m"
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
 	9)
     clear
 		jdk
-		cd /root
+		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
   0)
     clear
     salt_gameplaza
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   a)
     clear
     jdk
     zookeeper
-    cd /root/
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   b)
     clear
     mnt_disk
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   c)
     clear
     iptables
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   z)
     clear
     zabbix
-		cd /root
+		cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   u)
     clear
     useradd
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   r)
     clear
     dev
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
   m)
     usefull
-    cd /root
+    cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
 	q)
@@ -742,7 +744,7 @@ function main ()
 	*)
     clear
 		echo -e "\e[1;31m请输入正确的选项\e[0m"
-    cd /root
+    cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 	esac
 }
