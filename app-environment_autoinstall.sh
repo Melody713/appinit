@@ -599,8 +599,6 @@ echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,配
 (b): 磁盘分区挂载(/dev/sdb)
 (c): 开启iptables
 (d): 部署Zabbix 3.0.3客户端
-(e): 添加devs和ops账号
-(f): 添加devread账号
 (y): 配置PS1,安装配置vim-plug,tmux
 (z): 运维初始化(磁盘挂载,规范目录创建,基础环境部署,关闭selinux,时间同步,开启iptablse,部署zabbix客户端)
 (q): 退出\e[0m"
