@@ -478,7 +478,7 @@ then
   then
     yum install lftp -y
   fi
-/usr/bin/lftp 122.224.184.230 -p 2122 -u 'sa,js!HZ!121' -e "cd Tools/linux && get zabbix-3.0.3.tar.gz ;exit"
+/usr/bin/lftp 122.224.***.*** -p **** -u '****,********' -e "cd Tools/linux && get zabbix-3.0.3.tar.gz ;exit"
 if [ -f /root/$ZABBIX_PKG  ]
   then
   tar zxf /root/$ZABBIX_PKG -C /root/
