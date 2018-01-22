@@ -1,6 +1,6 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.8.5
+#version 1.6.8.10
 #update 2017.12.19
 #basic_env check update
 #By YPC
@@ -13,6 +13,8 @@
 #Add iptables ACCEPT port : 21000~21099,8080~8090
 #update 2018.01.19
 #Add htop iftop && makecache
+#update 2018.01.22
+#Delete dev&ops user add functions,add sa usefull function
 
 LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
