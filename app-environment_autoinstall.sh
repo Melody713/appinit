@@ -152,10 +152,10 @@ function iptables () {
 -A FORWARD -j REJECT --reject-with icmp-host-prohibited
 COMMIT
 EOF
-  #/sbin/service iptables save
-	/etc/init.d/iptables restart
-	chkconfig iptables on
-	echo -e "\e[1;32m已开启Iptables
+  echo "Iptables 写入完毕"
+  /etc/init.d/iptables restart
+  chkconfig iptables on
+  echo -e "\e[1;32m已开启Iptables
   开放22,1722,10050,4505,4506,21000~21099,8081~8089端口\e[0m"
 
 }
@@ -598,9 +598,11 @@ echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,配
 (a): 部署zookeeper-3.4.10
 (b): 磁盘分区挂载(/dev/sdb)
 (c): 开启iptables
-(z): 部署Zabbix 3.0.3客户端
-(u): 添加devs和ops账号
-(r): 添加devread账号
+(d): 部署Zabbix 3.0.3客户端
+(e): 添加devs和ops账号
+(f): 添加devread账号
+(y): 配置PS1,安装配置vim-plug,tmux
+(z): 运维初始化(磁盘挂载,规范目录创建,基础环境部署,关闭selinux,时间同步,开启iptablse,部署zabbix客户端)
 (q): 退出\e[0m"
 
 echo -e "\e[1;32m请输入序号:\e[0m"
@@ -608,73 +610,73 @@ read options
 
 function main ()
 {
-	case "$options" in
-	1)
+  case "$options" in
+  1)
     clear
-		basic_dir
-		basic_env
-		selinux
-		ntp
-		echo -e "\e[1;32m基础环境安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	2)
+    basic_dir
+    basic_env
+    selinux
+    ntp
+    echo -e "\e[1;32m基础环境安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  2)
     clear
-		basic_dir
-		basic_env
-		jdk
-		install_tomcat
-		echo -e "\e[1;32mTOMCAT安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	3)
+    basic_dir
+    basic_env
+    jdk
+    install_tomcat
+    echo -e "\e[1;32mTOMCAT安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  3)
     clear
-		basic_dir
-		basic_env
-		install_nginx
-		echo -e "\e[1;32mNginx安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	4)
+    basic_dir
+    basic_env
+    install_nginx
+    echo -e "\e[1;32mNginx安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  4)
     clear
-		basic_dir
-		basic_env
-		mysql
-		echo -e "\e[1;32mMYSQL安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
+    basic_dir
+    basic_env
+    mysql
+    echo -e "\e[1;32mMYSQL安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
 		;;
-	5)
+  5)
     clear
-		basic_dir
-		basic_env
-		redis
-		echo -e "\e[1;32mREDIS安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	6)
+    basic_dir
+    basic_env
+    redis
+    echo -e "\e[1;32mREDIS安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  6)
     clear
-		basic_dir
-		basic_env
-		rabbitmq
-		echo -e "\e[1;32mRabbitMQ安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	7)
+    basic_dir
+    basic_env
+    rabbitmq
+    echo -e "\e[1;32mRabbitMQ安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  7)
     clear
-		basic_dir
-		basic_env
-		salt_online
-		echo -e "\e[1;32msalt客户端安装完毕\e[0m"
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
-	8)
+    basic_dir
+    basic_env
+    salt_online
+    echo -e "\e[1;32msalt客户端安装完毕\e[0m"
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  8)
     clear
 		basic_dir
     basic_env
@@ -683,12 +685,12 @@ function main ()
 		cd $LOCALDIR
 		sh app-environment_autoinstall.sh
 		;;
-	9)
+  9)
     clear
-		jdk
-		cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-		;;
+    jdk
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
   0)
     clear
     salt_gameplaza
@@ -714,39 +716,40 @@ function main ()
     cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
-  z)
+  d)
     clear
     zabbix
-		cd $LOCALDIR
-    sh app-environment_autoinstall.sh
-    ;;
-  u)
-    clear
-    useradd
     cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
-  r)
-    clear
-    dev
-    cd $LOCALDIR
-    sh app-environment_autoinstall.sh
-    ;;
-  m)
+  y)
+    echo "配置PS1,安装配置vim-plug,tmux"
     usefull
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  z)
+    echo "运维初始化专用"
+    mnt_disk
+    basic_dir
+    basic_env
+    selinux
+    iptables
+    ntp
+    zabbix
     cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
 	q)
     echo "退出脚本"
-		exit
-		;;
+    exit
+    ;;
 	*)
     clear
-		echo -e "\e[1;31m请输入正确的选项\e[0m"
+    echo -e "\e[1;31m请输入正确的选项\e[0m"
     cd $LOCALDIR
-		sh app-environment_autoinstall.sh
-	esac
+    sh app-environment_autoinstall.sh
+esac
 }
 
 main $@
