@@ -1,6 +1,6 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.8.10
+#version 1.6.9
 #update 2017.12.19
 #basic_env check update
 #By YPC
@@ -15,6 +15,8 @@
 #Add htop iftop && makecache
 #update 2018.01.22
 #Delete dev&ops user add functions,add sa usefull function
+#update 2018.01.23
+#fixed mnt_disk functions,modified zabbix function
 
 LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
@@ -23,6 +25,7 @@ appdir=/data/SicentApp
 toolsdir=/data/SicentTools
 dbdir=/data/SicentDB
 logdir=/data/appinstall.log
+
 
 #check net_type
 default_route=$(ip route show)
@@ -486,7 +489,7 @@ then
   then
     yum install lftp -y
   fi
-/usr/bin/lftp 122.224.***.*** -p **** -u '****,********' -e "cd Tools/linux && get zabbix-3.0.3.tar.gz ;exit"
+  wget $ftp_url/Tools/Zabbix/zabbix-3.0.3.tar.gz -P /root/
 if [ -f /root/$ZABBIX_PKG  ]
   then
   tar zxf /root/$ZABBIX_PKG -C /root/
@@ -556,40 +559,6 @@ zookeeper_data目录: $appdir/zookeeper_data\e[0m"
 
 }
 
-
-
-function useradd() {
-cat /etc/passwd|grep devs>/dev/null
-###us "openssl passwd -stdin" get PWD###
-if [ $? -eq 1 ]
-  then
-  /usr/sbin/useradd -p "aPApguhdYP2ks" devs
-  echo "devs账号已创建"
-else
-  echo "devs账号已存在"
-
-fi
-cat /etc/passwd|grep ops>/dev/null
-if [ $? -eq 1 ]
-then
-  /usr/sbin/useradd -p "6Jn8XyRkaMcQQ" ops
-  echo "ops账号已创建"
-else
-  echo "ops账号已存在"
-fi
-
-}
-
-function dev  () {
-cat /etc/passwd|grep devread > /dev/null
-if [ $? -eq 1 ]
-then
-  /usr/sbin/useradd -p "mXB17bvNY5WWw" devread
-  echo "devread账号已创建"
-else
-  echo "devread账号已存在"
-fi
-}
 
 
 echo -e "\e[1;32m选择要安装的服务类型,目前支持以下项目:\e[0m"
