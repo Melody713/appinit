@@ -1,6 +1,6 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.9
+#version 1.6.10
 #update 2017.12.19
 #basic_env check update
 #By YPC
@@ -16,7 +16,7 @@
 #update 2018.01.22
 #Delete dev&ops user add functions,add sa usefull function
 #update 2018.01.23
-#fixed mnt_disk functions,modified zabbix function
+#fixed mnt_disk functions,modified zabbix function,fixed vim-plug & tmux 
 
 LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
@@ -66,7 +66,7 @@ alias grep='grep --color'
 alias egrep='egrep --color'
 alias fgrep='fgrep --color'
 
-if [ -e /usr/share/terminfo/x/xterm+256color ];
+if [ -e /usr/share/terminfo/x/xterm-256color ];
 then
   export TERM='xterm-256color'
 else
@@ -76,13 +76,15 @@ fi
 EOF
 
 #下载vim-plug
-rpm -qa|grep git && rpm -qa |grep ctags
+rpm -qa|grep git && rpm -qa |grep ctags >> /dev/null
 if [ $? -ne 0 ]
 then
   yum install git ctags -y
 fi
+  echo "获取plug.vim"
   curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   mkdir -p ~/.vim/plugged
+  echo "获取vim配置"
   curl -fLo ~/.vimrc https://raw.githubusercontent.com/Melody713/appinit/master/.vimrc
   echo "use vim PlugInstall"
 
@@ -92,6 +94,7 @@ if [ $? -ne 0 ]
 then
   yum install tmux -y
 fi
+echo "获取tmux配置"
 curl -fLo ~/.tmux.conf https://raw.githubusercontent.com/Melody713/appinit/master/.tmux.conf
 
 }
