@@ -1,6 +1,6 @@
 #!/bin/bash
 #Auto Install Application
-#version 1.6.10
+#version 1.6.11
 #update 2017.12.19
 #basic_env check update
 #By YPC
@@ -16,11 +16,12 @@
 #update 2018.01.22
 #Delete dev&ops user add functions,add sa usefull function
 #update 2018.01.23
-#fixed mnt_disk functions,modified zabbix function,fixed vim-plug & tmux 
+#fixed mnt_disk functions,modified zabbix function,fixed vim-plug & tmux, add useradd function
 
 LOCALDIR=$(cd "$(dirname "$0")"&& pwd)
 
 webdir=/data/SicentWebserver
+websitedir=/data/SicentWebsite
 appdir=/data/SicentApp
 toolsdir=/data/SicentTools
 dbdir=/data/SicentDB
@@ -102,13 +103,13 @@ curl -fLo ~/.tmux.conf https://raw.githubusercontent.com/Melody713/appinit/maste
 
 #Check basic_dir
 function basic_dir () {
-	ls -l $webdir && ls -l $toolsdir ls -l $appdir
+	ls -l $webdir && ls -l $toolsdir && ls -l $appdir && ls -l $websitedir
 	if [ $? -eq 0 ]
 	then
         	echo -e "\e[1;32m规范目录已存在\e[0m"
 	else
         	echo -e "\e[1;32m规范目录不存在,正在创建\e[0m"
-	        mkdir -pv $webdir && mkdir -pv $toolsdir && mkdir -pv $appdir
+	        mkdir -pv $webdir && mkdir -pv $toolsdir && mkdir -pv $appdir && mkdir -pv $websitedir
 	fi
 }
 
@@ -562,6 +563,27 @@ zookeeper_data目录: $appdir/zookeeper_data\e[0m"
 
 }
 
+function useradd() {
+cat /etc/passwd|grep devs>/dev/null
+###us "openssl passwd -stdin" get PWD###
+if [ $? -eq 1  ]
+then
+  /usr/sbin/useradd -p "aPApguhdYP2ks" devs
+  echo "devs账号已创建"
+else
+  echo "devs账号已存在"
+fi
+
+cat /etc/passwd|grep ops>/dev/null
+if [ $? -eq 1  ]
+then
+  /usr/sbin/useradd -p "6Jn8XyRkaMcQQ" ops
+  echo "ops账号已创建"
+else
+  echo "ops账号已存在"
+fi
+
+}
 
 
 echo -e "\e[1;32m选择要安装的服务类型,目前支持以下项目:\e[0m"
@@ -579,6 +601,7 @@ echo -e "\e[1;36m(1): 创建规范目录,安装基础库环境,关闭selinux,配
 (b): 磁盘分区挂载(/dev/sdb)
 (c): 开启iptables
 (d): 部署Zabbix 3.0.3客户端
+(e): 添加devs & ops 账号
 (y): 配置PS1,安装配置vim-plug,tmux
 (z): 运维初始化(磁盘挂载,规范目录创建,基础环境部署,关闭selinux,时间同步,开启iptablse,部署zabbix客户端)
 (q): 退出\e[0m"
@@ -697,6 +720,12 @@ function main ()
   d)
     clear
     zabbix
+    cd $LOCALDIR
+    sh app-environment_autoinstall.sh
+    ;;
+  e)
+    clear
+    useradd
     cd $LOCALDIR
     sh app-environment_autoinstall.sh
     ;;
