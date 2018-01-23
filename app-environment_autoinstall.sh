@@ -170,6 +170,11 @@ function ntp () {
 }
 
 function mnt_disk(){
+if [ -e /dev/sdb1 ]
+then
+  echo "/dev/sdb1 分区已存在"
+else
+
 DISK_COUNTS=`fdisk -l |grep "^Disk /dev/sd"|grep -v "/dev/sda"|wc -l`
 if [ $DISK_COUNTS -ne 0 ]
 then
@@ -194,6 +199,7 @@ echo "新磁盘已挂载到 /data "
 else
   echo "未发现新磁盘"
   return
+fi
 fi
 }
 
