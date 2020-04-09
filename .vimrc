@@ -158,7 +158,7 @@ let g:is_posix = 1
 " vim gui
 set tabpagemax=15
 set noshowmode " hide the default mode text (e.g. -- INSERT -- below the statusline)
-set cursorline
+" set cursorline
 set shortmess=atI
 autocmd InsertLeave * set cul
 set scrolloff=3
@@ -226,7 +226,7 @@ nnoremap <F9> :resize -5<CR>
 nnoremap <F10> :resize +5<CR>
 
 " formatting
-set nowrap
+" set nowrap
 set autoindent
 set shiftwidth=2
 set expandtab
